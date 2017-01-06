@@ -15,6 +15,7 @@ scripts = [
 ]
 
 required = [
+    "enum34 >= 1.1.6",
     "numpy >= 1.10.1",
     "pbcore >= 1.2.6",
 ]

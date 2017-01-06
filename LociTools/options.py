@@ -35,10 +35,22 @@ import argparse
 import os
 import os.path as op
 import sys
+from enum import Enum
+
+class Applications(Enum):
+    TYPING = 1
+    ANALYSIS = 2
+    UPDATE = 3
 
 PRESETS = ["classI", "fiveLoci", "gendx"]
 
 options = argparse.Namespace()
+
+def whichApplication():
+    try:
+        return getattr(options, 'application')
+    except:
+        raise KeyError("Application not set!")
 
 def parseOptions():
     """
@@ -52,12 +64,15 @@ def parseOptions():
     
     typing_desc = "Attempt to assign HLA types to AmpliconAnalysis or LociAnalysis result sequences"
     typing_parser = subparsers.add_parser('typing', help=typing_desc)
+    typing_parser.set_defaults(application=Applications.TYPING)
     
     analysis_desc = "Run Long Amplicon Analysis v2 indepedently on different loci and combine the results"
     analysis_parser = subparsers.add_parser('analysis', help=analysis_desc)
+    analysis_parser.set_defaults(application=Applications.ANALYSIS)
 
     update_desc = "Update the reference sequences from the IMGT database used by LociTools"
     update_parser = subparsers.add_parser('update', help=update_desc)
+    update_parser.set_defaults(application=Applications.UPDATE)
 
     def canonicalizedFilePath(path):
         return op.abspath(op.expanduser(path))
@@ -266,15 +281,17 @@ def parseOptions():
 
     parser.parse_args(namespace=options)
 
-    # Check that we don't have multiple competing presets
-    optDict = vars(options)
-    for i in range(len(PRESETS)-1):
-        fst = PRESETS[i]
-        for snd in PRESETS[i+1:]:
-            if optDict[fst] and optDict[snd]:
-                parser.error("Contradictory Options: {0} and {1} cannot both be True".format(fst, snd))
+    # If we're running the Analysis tool, sanity-check the supplied arguments
+    if whichApplication == 'analysis':
+        # Check that we don't have multiple competing presets
+        optDict = vars(options)
+        for i in range(len(PRESETS)-1):
+            fst = PRESETS[i]
+            for snd in PRESETS[i+1:]:
+                if optDict[fst] and optDict[snd]:
+                    parser.error("Contradictory Options: {0} and {1} cannot both be True".format(fst, snd))
 
-    # Validate expected inputs and output directory
-    checkInputDirectory(options.referenceDirectory)
-    checkInputFile(options.inputFilename)
-    checkOutputDirectory(options.outputDirectory)
+        # Validate expected inputs and output directory
+        checkInputDirectory(options.referenceDirectory)
+        checkInputFile(options.inputFilename)
+        checkOutputDirectory(options.outputDirectory)
