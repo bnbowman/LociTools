@@ -46,6 +46,23 @@ PRESETS = ["classI", "fiveLoci", "gendx"]
 
 options = argparse.Namespace()
 
+__all__ = ["options", "parseOptions", "whichApplication"]
+
+## Private utilities
+
+def _canonicalizedFilePath(path):
+    return op.abspath(op.expanduser(path))
+
+def _add_update_options( subparser ):
+    subparser.set_defaults(application=Applications.UPDATE)
+
+    subparser.add_argument(
+        "imgtAlignmentZip",
+        type=_canonicalizedFilePath,
+        help="The input directory of per-locus reference sequences")
+
+## Public module functions
+
 def whichApplication():
     try:
         return getattr(options, 'application')
@@ -61,21 +78,18 @@ def parseOptions():
     subparsers = parser.add_subparsers(title='LociTools',
                                        description='Available tools for analyzing Loci-specific amplicons',
                                        help='additional help')
-    
+
     typing_desc = "Attempt to assign HLA types to AmpliconAnalysis or LociAnalysis result sequences"
     typing_parser = subparsers.add_parser('typing', help=typing_desc)
     typing_parser.set_defaults(application=Applications.TYPING)
-    
+
     analysis_desc = "Run Long Amplicon Analysis v2 indepedently on different loci and combine the results"
     analysis_parser = subparsers.add_parser('analysis', help=analysis_desc)
     analysis_parser.set_defaults(application=Applications.ANALYSIS)
 
     update_desc = "Update the reference sequences from the IMGT database used by LociTools"
     update_parser = subparsers.add_parser('update', help=update_desc)
-    update_parser.set_defaults(application=Applications.UPDATE)
-
-    def canonicalizedFilePath(path):
-        return op.abspath(op.expanduser(path))
+    _add_update_options( parser )
 
     def checkInputDirectory(path):
         if not op.isdir(path):
@@ -112,17 +126,17 @@ def parseOptions():
     basics = analysis_parser.add_argument_group("Basic required options")
     basics.add_argument(
         "referenceDirectory",
-        type=canonicalizedFilePath,
+        type=_canonicalizedFilePath,
         help="The input directory of per-locus reference sequences")
     basics.add_argument(
         "inputFilename",
-        type=canonicalizedFilePath,
+        type=_canonicalizedFilePath,
         help="The filename of the query BAM or DataSet")
     basics.add_argument(
         "-o", "--outputDirectory",
         default="loci_analysis",
         metavar="STRING",
-        type=canonicalizedFilePath,
+        type=_canonicalizedFilePath,
         help="The output folder for combined results")
     basics.add_argument(
         "--verbose", "-v",

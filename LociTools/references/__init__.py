@@ -5,10 +5,15 @@ import pkg_resources as pkg
 
 from pbcore.io import FastaReader, FastaWriter
 
+from .version import parse_version_str
+from .date import parse_date_str
+
 ## Private Constant variables
 
 _REF_DIR        = "LociTools.references"
 _REF_PATH       = pkg.resource_filename(_REF_DIR, '')
+_VERSION_REF    = pkg.resource_filename(_REF_DIR, 'version.txt')
+_DATE_REF       = pkg.resource_filename(_REF_DIR, 'date.txt')
 _GENOMIC_REF    = pkg.resource_filename(_REF_DIR, 'genomic.fasta')
 _GENOMIC_SUFFIX = "gen"
 _CDNA_REF       = pkg.resource_filename(_REF_DIR, 'cDNA.fasta')
@@ -129,6 +134,12 @@ def make_exon_reference():
                 raise MissingReferenceException('Missing expected reference file "{0}" for Locus "{1}"'.format(expected_file, resource))
     _write_map( _EXON_REF, data )
     return True
+
+def get_reference_version():
+    print parse_version_str( "3.26.0" )
+
+def get_reference_date():
+    print parse_date_str( "1983 September 17" )
 
 def get_genomic_reference():
     if genomic_reference_exists():

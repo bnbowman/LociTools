@@ -12,23 +12,33 @@ from pbcore.io import openDataSet
 
 from LociTools import options
 from LociTools.options import Applications
-from LociTools.typing import LociTyper
+from LociTools import references
+from LociTools.imgt.ImgtReference import ImgtReference
+#from LociTools.typing import LociTyper
+
+logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s', level=logging.DEBUG)
+log = logging.getLogger(__name__)
 
 def main():
-    log = logging.getLogger()
     options.parseOptions()
     app = options.whichApplication()
     if app == Applications.TYPING:
-        print "Typing"
-        typer = LociTyper("all")
-        print typer.genomicRef
-        print typer.cDnaRef
-        print typer.exonRef
+        log.debug("Typing")
+        print references.get_genomic_reference()
+        print references.get_cDNA_reference()
+        print references.get_exon_reference()
+        #typer = LociTyper("all")
+        #print typer.genomicRef
+        #print typer.cDnaRef
+        #print typer.exonRef
     elif app == Applications.ANALYSIS:
-        print "Analysis"
+        log.debug("Analysis")
     elif app == Applications.UPDATE:
-        print "Update"
-    
+        log.debug("Update")
+        references.get_reference_version()
+        references.get_reference_date()
+        imgt = ImgtReference( options.options.imgtAlignmentZip )
+    log.debug("Done")
 
 if __name__ == "__main__":
     main()
