@@ -89,7 +89,7 @@ def parseOptions():
 
     update_desc = "Update the reference sequences from the IMGT database used by LociTools"
     update_parser = subparsers.add_parser('update', help=update_desc)
-    _add_update_options( parser )
+    _add_update_options( update_parser )
 
     def checkInputDirectory(path):
         if not op.isdir(path):

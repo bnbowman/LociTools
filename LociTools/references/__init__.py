@@ -1,12 +1,13 @@
 
 import os
+import logging
+import calendar
 import os.path as op
 import pkg_resources as pkg
 
 from pbcore.io import FastaReader, FastaWriter
 
-from .version import parse_version_str
-from .date import parse_date_str
+log = logging.getLogger(__name__)
 
 ## Private Constant variables
 
@@ -31,19 +32,49 @@ class ReferenceFormatException(ReferenceException):
 class MissingReferenceException(ReferenceException):
     pass
 
+class MissingMetaDataException(ReferenceException):
+    pass
+
 class ReferenceIOException(ReferenceException):
     pass
 
 
 ## Private utility functions
 
-def _file_exists( filepath ):
+def _fileExists( filepath ):
     return op.exists( filepath ) and op.isfile( filepath )
 
-def _dir_exists( dirpath ):
+def _dirExists( dirpath ):
     return op.exists( dirpath ) and op.isdir( dirpath )
 
-def _read_fasta( filepath ):
+def _monthToInt( month ):
+    months = {m.lower(): idx for idx, m in enumerate(calendar.month_name)}
+    try:
+        return months[month.lower()]
+    except:
+        return -1
+
+def _parseDateStr( date_str ):
+    """
+    Convert a date string to a numeric tuple for easy ordering
+    """
+    parts = date_str.strip().split()
+    year  = int(parts[0])
+    month = month_to_int( parts[1] )
+    day   = int(parts[2])
+    return (year, month, day)
+
+def _parseVersionStr( version_str ):
+    """
+    Convert a version string to a numeric tuple for easy ordering
+    """
+    parts = version_str.strip().split('.')
+    major = int(parts[0])
+    minor = int(parts[1])
+    patch = int(parts[2])
+    return (major, minor, patch)
+
+def _readFasta( filepath ):
     """
     Attempt to read a reference FASTA into memory as a list of records
     """
@@ -53,7 +84,7 @@ def _read_fasta( filepath ):
         raise ReferenceFormatException('Reference file "{0}" is not a well-formated FASTA file!'.format( filepath ))
     return recs
 
-def _write_fasta( filepath, records ):
+def _writeFasta( filepath, records ):
     """
     Attempt to write a list of records to a new reference FASTA
     """
@@ -64,7 +95,7 @@ def _write_fasta( filepath, records ):
     except:
         raise ReferenceIOException('Unable to write reference FASTA "{0}"'.format( filepath ))
 
-def _write_map( filepath, data ):
+def _writeMap( filepath, data ):
     """
     Attempt to write a map of files to a new reference map
     """
@@ -76,7 +107,7 @@ def _write_map( filepath, data ):
     except:
         raise ReferenceIOException('Unable to write reference map "{0}"'.format( filepath ))
 
-def _make_reference( output_path, type_suffix ):
+def _makeReference( output_path, type_suffix ):
     recs = []
     for resource in pkg.resource_listdir(_REF_DIR, ''):
         if pkg.resource_isdir(_REF_DIR, resource ):
@@ -86,10 +117,10 @@ def _make_reference( output_path, type_suffix ):
                 recs += _read_fasta( expected_path )
             else:
                 raise MissingReferenceException('Missing expected reference file "{0}" for Locus "{1}"'.format(expected_file, resource))
-    _write_fasta( output_path, recs )
+    _writeFasta( output_path, recs )
     return True
 
-def _make_exon_map( output_path, locus ):
+def _makeExonMap( output_path, locus ):
     data = {}
     exon_dir = op.join( _REF_PATH, locus, "exons" )
     if _dir_exists( exon_dir ):
@@ -100,27 +131,27 @@ def _make_exon_map( output_path, locus ):
                 data[exon] = filepath
     else:
         raise MissingReferenceException('Missing exon data for Locus "{0}"'.format(locus))
-    _write_map( output_path, data )
+    _writeMap( output_path, data )
     return True
 
 ## Public accessor functions
 
-def genomic_reference_exists():
-    return _file_exists( _GENOMIC_REF )
+def genomicReferenceExists():
+    return _fileExists( _GENOMIC_REF )
 
-def cDNA_reference_exists():
-    return _file_exists( _CDNA_REF )
+def cDNAReferenceExists():
+    return _fileExists( _CDNA_REF )
 
-def exon_reference_exists():
-    return _file_exists( _EXON_REF )
+def exonReferenceExists():
+    return _fileExists( _EXON_REF )
 
-def make_genomic_reference():
-    return _make_reference( _GENOMIC_REF, _GENOMIC_SUFFIX )
+def makeGenomicReference():
+    return _makeReference( _GENOMIC_REF, _GENOMIC_SUFFIX )
 
-def make_cDNA_reference():
-    return _make_reference( _CDNA_REF, _CDNA_SUFFIX )
+def makeCDNAReference():
+    return _makeReference( _CDNA_REF, _CDNA_SUFFIX )
 
-def make_exon_reference():
+def makeExonReference():
     data = {}
     for resource in pkg.resource_listdir(_REF_DIR, ''):
         if pkg.resource_isdir(_REF_DIR, resource ):
@@ -132,35 +163,49 @@ def make_exon_reference():
                 data[resource] = expected_path
             else:
                 raise MissingReferenceException('Missing expected reference file "{0}" for Locus "{1}"'.format(expected_file, resource))
-    _write_map( _EXON_REF, data )
+    _writeMap( _EXON_REF, data )
     return True
 
-def get_reference_version():
-    print parse_version_str( "3.26.0" )
+def version():
+    try:
+        with open(_VERSION_REF) as handle:
+            return handle.read().strip()
+    except:
+        raise MissingMetaDataException("Unable to read reference version")
 
-def get_reference_date():
-    print parse_date_str( "1983 September 17" )
+def date():
+    try:
+        with open(_DATE_REF) as handle:
+            return handle.read().strip()
+    except:
+        raise MissingMetaDataException("Unable to read reference date")
 
-def get_genomic_reference():
-    if genomic_reference_exists():
+def genomicReference():
+    if genomicReferenceExists():
+        log.debug("Using existing Genomic Reference FASTA")
         return _GENOMIC_REF
-    elif make_genomic_reference():
+    elif makeGenomicReference():
+        log.debug("No Genomic Reference FASTA found, attempting to generate one...")
         return _GENOMIC_REF
     else:
         raise MissingReferenceException('Unable to generate Genomic reference FASTA')
 
-def get_cDNA_reference():
-    if cDNA_reference_exists():
+def cDNAReference():
+    if cDNAReferenceExists():
+        log.debug("Using existing cDNA Reference FASTA")
         return _CDNA_REF
-    elif make_cDNA_reference():
+    elif makeCDNAReference():
+        log.debug("No cDNA Reference FASTA found, attempting to generate one...")
         return _CDNA_REF
     else:
         raise MissingReferenceException('Unable to generate cDNA reference FASTA')
 
-def get_exon_reference():
-    if exon_reference_exists():
+def exonReference():
+    if exonReferenceExists():
+        log.debug("Using existing Exon Reference Map")
         return _EXON_REF
-    elif make_exon_reference():
+    elif makeExonReference():
+        log.debug("No Exon Reference Map found, attempting to generate one...")
         return _EXON_REF
     else:
         raise MissingReferenceException('Unable to generate exon reference map')
