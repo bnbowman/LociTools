@@ -7,6 +7,8 @@ import pkg_resources as pkg
 
 from pbcore.io import FastaReader, FastaWriter
 
+from LociTools import utils
+
 log = logging.getLogger(__name__)
 
 ## Private Constant variables
@@ -40,12 +42,6 @@ class ReferenceIOException(ReferenceException):
 
 
 ## Private utility functions
-
-def _fileExists( filepath ):
-    return op.exists( filepath ) and op.isfile( filepath )
-
-def _dirExists( dirpath ):
-    return op.exists( dirpath ) and op.isdir( dirpath )
 
 def _monthToInt( month ):
     months = {m.lower(): idx for idx, m in enumerate(calendar.month_name)}
@@ -137,13 +133,13 @@ def _makeExonMap( output_path, locus ):
 ## Public accessor functions
 
 def genomicReferenceExists():
-    return _fileExists( _GENOMIC_REF )
+    return utils.isValidFile( _GENOMIC_REF )
 
 def cDNAReferenceExists():
-    return _fileExists( _CDNA_REF )
+    return utils.isValidFile( _CDNA_REF )
 
 def exonReferenceExists():
-    return _fileExists( _EXON_REF )
+    return utils.isValidFile( _EXON_REF )
 
 def makeGenomicReference():
     return _makeReference( _GENOMIC_REF, _GENOMIC_SUFFIX )

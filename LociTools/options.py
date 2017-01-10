@@ -53,13 +53,21 @@ __all__ = ["options", "parseOptions", "whichApplication"]
 def _canonicalizedFilePath(path):
     return op.abspath(op.expanduser(path))
 
-def _add_update_options( subparser ):
+def _addTypingOptions( subparser ):
+    subparser.set_defaults(application=Applications.TYPING)
+
+    subparser.add_argument(
+        "typingQuery",
+        type=_canonicalizedFilePath,
+        help="The input directory of per-locus reference sequences")
+
+def _addUpdateOptions( subparser ):
     subparser.set_defaults(application=Applications.UPDATE)
 
     subparser.add_argument(
         "imgtAlignmentZip",
         type=_canonicalizedFilePath,
-        help="The input directory of per-locus reference sequences")
+        help="The ZIP file of reference sequence alignments to update from")
 
 ## Public module functions
 
@@ -79,17 +87,17 @@ def parseOptions():
                                        description='Available tools for analyzing Loci-specific amplicons',
                                        help='additional help')
 
-    typing_desc = "Attempt to assign HLA types to AmpliconAnalysis or LociAnalysis result sequences"
-    typing_parser = subparsers.add_parser('typing', help=typing_desc)
-    typing_parser.set_defaults(application=Applications.TYPING)
+    typingDesc = "Attempt to assign HLA types to AmpliconAnalysis or LociAnalysis result sequences"
+    typingParser = subparsers.add_parser('typing', help=typingDesc)
+    _addTypingOptions( typingParser )
 
     analysis_desc = "Run Long Amplicon Analysis v2 indepedently on different loci and combine the results"
     analysis_parser = subparsers.add_parser('analysis', help=analysis_desc)
     analysis_parser.set_defaults(application=Applications.ANALYSIS)
 
-    update_desc = "Update the reference sequences from the IMGT database used by LociTools"
-    update_parser = subparsers.add_parser('update', help=update_desc)
-    _add_update_options( update_parser )
+    updateDesc = "Update the reference sequences from the IMGT database used by LociTools"
+    updateParser = subparsers.add_parser('update', help=updateDesc)
+    _addUpdateOptions( updateParser )
 
     def checkInputDirectory(path):
         if not op.isdir(path):

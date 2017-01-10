@@ -31,6 +31,7 @@ def main():
         print typer.genomicRef
         print typer.cDnaRef
         print typer.exonRef
+        typer( options.options.typingQuery )
     elif app == Applications.ANALYSIS:
         log.debug("Analysis")
     elif app == Applications.UPDATE:

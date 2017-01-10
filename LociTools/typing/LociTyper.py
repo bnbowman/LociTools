@@ -1,7 +1,10 @@
 
 import logging
+import os
+import os.path as op
 from enum import Enum
 
+from LociTools import utils
 from LociTools import references
 
 log = logging.getLogger(__name__)
@@ -30,6 +33,8 @@ class LociTyper( object ):
 
         # Stuff
         print [s.name for s in GroupingType]
+
+    ## Setter / Getter Methods
 
     @property
     def loci(self):
@@ -86,10 +91,46 @@ class LociTyper( object ):
             log.debug('Overriding default Exon Reference Map with "{0}"'.format(arg))
             self._exonRef = arg
 
-    def __call__(self):
-        pass
+    ## Private methods
+
+    def __validateInput( self, inputArg ):
+        """
+        Valid the input argument and convert to absolute path
+        """
+        if utils.isValidDirectory( inputArg ):
+            log.info("Input appears to be a directory, looking for analysis FASTQ result")
+            contents = os.listdir( inputArg )
+            absDir = op.abspath( inputArg )
+            if "amplicon_analysis.fastq" in contents:
+                absPath = op.join( absDir, "amplicon_analysis.fastq" )
+                if utils.isValidFastq( absPath ):
+                    return absPath
+            elif "loci_analysis.fastq" in contents:
+                absPath = op.join( absDir, "loci_analysis.fastq" )
+                if utils.isValidFastq( absPath ):
+                    return absPath
+            else:
+                msg = "No valid analysis FASTQ files found in the input directory!"
+                log.error( msg )
+                raise IOError( msg )
+        elif utils.isValidFile( inputArg ):
+            if utils.isValidFasta( inputArg ):
+                return op.abspath( inputArg )
+            elif utils.isValidFastq( inputArg ):
+                return op.abspath( inputArg )
+            else:
+                msg = "Input is not a valid FASTQ or FASTQ file!"
+                log.error( msg )
+                raise IOError( msg )
+        else:
+            msg = "Input is not a valid analysis file or directory!"
+            log.error( msg )
+            raise IOError( msg )
+
+    def __call__(self, inputArg ):
         # Second, get the input file if a directory was specified
-        #sequence_file = get_input_file( input )
+        validInput = self.__validateInput( inputArg )
+        print "INPUT: ", validInput
 
         # Finally, run the Typing procedure
         #renamed_file = rename_sequences( sequence_file )
