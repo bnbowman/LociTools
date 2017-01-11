@@ -4,7 +4,7 @@ import os.path as op
 import shutil
 import logging
 
-from pbcore.io import FastqReader, FastqWriter, FastqRecord
+from pbcore.io import FastaReader, FastqReader, FastqWriter, FastqRecord
 
 log = logging.getLogger(__name__)
 
@@ -43,6 +43,43 @@ def isValidFastq( filename ):
     except:
         return False
     return True
+
+def isExe( file_path ):
+    if file_path is None:
+        return False
+    return os.path.isfile(file_path) and os.access(file_path, os.X_OK)
+
+def which(program):
+    """
+    Find and return path to local executables
+    """
+    fpath, fname = os.path.split(program)
+    if fpath:
+        if isExe(program):
+            return program
+    else:
+        for path in os.environ["PATH"].split(os.pathsep):
+            path = path.strip('"')
+            exeFile = os.path.join(path, program)
+            if isExe(exeFile):
+                return exeFile
+    return None
+
+def removeFile( filepath ):
+    if isValidFile( filepath ):
+        try:
+            os.remove( filepath )
+        except:
+            basename = op.basename( filepath )
+            msg = 'Could not delete file "{0}"!'.format(basename)
+            log.error( msg )
+            raise IOError( msg )
+
+def fastaRecordCount( filepath ):
+    try:
+        return len(list(FastaReader(filepath)))
+    except:
+        return None
 
 def sequencefiletype( file_list ):
     if all([isFastq(f) for f in file_list]):
@@ -186,37 +223,6 @@ def copy_file( source, destination ):
     shutil.copy( source, destination )
     check_output_file( destination )
     return destination
-
-def remove_file( filepath ):
-    if os.path.isfile( filepath ):
-        try:
-            os.remove( filepath )
-        except:
-            basename = os.path.basename( filepath )
-            msg = 'Could not delete file! "%s"' % basename
-            log.error( msg )
-            raise IOError( msg )
-
-def is_exe( file_path ):
-    if file_path is None:
-        return False
-    return os.path.isfile(file_path) and os.access(file_path, os.X_OK)
-
-def which(program):
-    """
-    Find and return path to local executables  
-    """
-    fpath, fname = os.path.split(program)
-    if fpath:
-        if is_exe(program):
-            return program
-    else:
-        for path in os.environ["PATH"].split(os.pathsep):
-            path = path.strip('"')
-            exe_file = os.path.join(path, program)
-            if is_exe(exe_file):
-                return exe_file
-    return None
 
 def create_directory( directory ):
     # Skip if the directory exists

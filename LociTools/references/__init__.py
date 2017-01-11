@@ -110,7 +110,7 @@ def _makeReference( output_path, type_suffix ):
             expected_file = "{0}_{1}.fasta".format(resource, type_suffix)
             expected_path = op.join(_REF_PATH, resource, expected_file)
             if op.exists( expected_path ):
-                recs += _read_fasta( expected_path )
+                recs += _readFasta( expected_path )
             else:
                 raise MissingReferenceException('Missing expected reference file "{0}" for Locus "{1}"'.format(expected_file, resource))
     _writeFasta( output_path, recs )

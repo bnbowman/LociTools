@@ -6,6 +6,7 @@ from enum import Enum
 
 from LociTools import utils
 from LociTools import references
+from LociTools.external import BlasrRunner
 
 log = logging.getLogger(__name__)
 
@@ -20,6 +21,7 @@ class LociTyper( object ):
 
     def __init__( self, loci,
                         grouping=GroupingType.BOTH,
+                        blasrExe=None,
                         genomicRef=None,
                         cDnaRef=None,
                         exonRef=None):
@@ -30,6 +32,7 @@ class LociTyper( object ):
         self.genomicRef = genomicRef
         self.cDnaRef    = cDnaRef
         self.exonRef    = exonRef
+        self._blasr     = BlasrRunner.BlasrRunner( blasrExe )
 
         # Stuff
         print [s.name for s in GroupingType]
@@ -95,7 +98,7 @@ class LociTyper( object ):
 
     def __validateInput( self, inputArg ):
         """
-        Valid the input argument and convert to absolute path
+        Valid the input argument and convert to a single absolute filepath
         """
         if utils.isValidDirectory( inputArg ):
             log.info("Input appears to be a directory, looking for analysis FASTQ result")
@@ -129,12 +132,12 @@ class LociTyper( object ):
 
     def __call__(self, inputArg ):
         # Second, get the input file if a directory was specified
-        validInput = self.__validateInput( inputArg )
-        print "INPUT: ", validInput
+        inputFile = self.__validateInput( inputArg )
+        print "INPUT: ", inputFile
+        print "BLASR: ", self._blasr._exe
 
-        # Finally, run the Typing procedure
-        #renamed_file = rename_sequences( sequence_file )
-        #raw_alignment = full_align_best_reference( renamed_file, genomic_reference )
+        raw_alignment = self._blasr.fullBestAlignment( inputFile, self.genomicRef )
+        print "FIRST ALIGN:", raw_alignment
         #reoriented = orient_sequences( renamed_file, alignment_file=raw_alignment )
         #selected = extract_alleles( reoriented, alignment_file=raw_alignment,
         #                    method=grouping,
