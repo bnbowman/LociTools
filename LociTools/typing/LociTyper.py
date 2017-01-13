@@ -5,10 +5,12 @@ import os.path as op
 from enum import Enum
 
 from LociTools import utils
+from LociTools.utils.orientation import orientSequences
 from LociTools import references
 from LociTools.external import BlasrRunner
 
 log = logging.getLogger(__name__)
+
 
 class GroupingType(Enum):
     LOCUS = 1
@@ -136,9 +138,10 @@ class LociTyper( object ):
         print "INPUT: ", inputFile
         print "BLASR: ", self._blasr._exe
 
-        raw_alignment = self._blasr.fullBestAlignment( inputFile, self.genomicRef )
-        print "FIRST ALIGN:", raw_alignment
-        #reoriented = orient_sequences( renamed_file, alignment_file=raw_alignment )
+        alignFile = self._blasr.fullBestAlignment( inputFile, self.genomicRef )
+        print "FIRST ALIGN: ", alignFile
+        reoriented = orientSequences( inputFile, alignFile )
+        print "ORIENTED: ", reoriented
         #selected = extract_alleles( reoriented, alignment_file=raw_alignment,
         #                    method=grouping,
         #                    loci=loci)
