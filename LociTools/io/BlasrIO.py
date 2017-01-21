@@ -17,6 +17,7 @@ class BlasrTypeError(TypeError):
 class BlasrReader( ReaderBase ):
 
     def __init__(self, f, filetype=None):
+        print f, filetype
         self.file = getFileHandle(f, 'r')
 
         filetype = filetype or f.split('.')[-1]

@@ -71,4 +71,4 @@ def orientSequences( inputFile, alignFile, outputFile=None ):
     orientedRecords = _orientRecords( records, reversedIds )
 
     utils.writeSequenceRecords( outputFile, orientedRecords, outputType )
-    return output_file
+    return outputFile

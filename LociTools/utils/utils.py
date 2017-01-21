@@ -4,8 +4,6 @@ import os.path as op
 import shutil
 import logging
 
-from pbcore.io import FastaReader, FastqReader, FastaWriter, FastqWriter
-
 log = logging.getLogger(__name__)
 
 def isValidFile( filepath ):
@@ -25,24 +23,6 @@ def isFastqFile( filename ):
     if fn.endswith('.fastq') or fn.endswith('.fq'):
         return True
     return False
-
-def isValidFasta( filename ):
-    if not isValidFile( filename ) or not isFastaFile( filename ):
-        return False
-    try:
-        list(FastaReader(filename))
-    except:
-        return False
-    return True
-
-def isValidFastq( filename ):
-    if not isValidFile( filename ) or not isFastqFile( filename ):
-        return False
-    try:
-        list(FastqReader(filename))
-    except:
-        return False
-    return True
 
 def isExe( file_path ):
     if file_path is None:
@@ -75,12 +55,6 @@ def removeFile( filepath ):
             log.error( msg )
             raise IOError( msg )
 
-def fastaRecordCount( filepath ):
-    try:
-        return len(list(FastaReader(filepath)))
-    except:
-        return None
-
 def getFileType( filename ):
     if filename.endswith('.fa') or filename.endswith('.fasta'):
         return 'fasta'
@@ -90,40 +64,20 @@ def getFileType( filename ):
         return 'fofn'
     elif filename.endswith('.bas.h5') or filename.endswith('.bax.h5'):
         return 'bas.h5'
+    elif filename.endswith('.m1'):
+        return 'm1'
+    elif filename.endswith('.m5'):
+        return 'm5'
     else:
         msg = 'File is not of a recognized filetype'
         log.error( msg )
         raise TypeError( msg )
 
-def readSequenceRecords( filename ):
+def getOutputFile( inputFile, fileTag ):
     """
-    Parse the input sequence records with the appropriate pbcore Reader
+    Name a new file with the same type as the old, but a new descriptive tag
+     before the suffix
     """
-    fileType = getFileType( filename )
-    if fileType == 'fasta':
-        return list( FastaReader( filename ))
-    elif fileType == 'fastq':
-        return list( FastqReader( filename ))
-    else:
-        msg = 'Input file must be either FASTA or FASTQ'
-        log.error( msg )
-        raise TypeError( msg )
-
-def writeSequenceRecords( filename, records, filetype=None ):
-    """
-    Write the records out to file
-    """
-    fileType = filetype or getFileType( filename )
-    if fileType == 'fasta':
-        with FastaWriter( filename ) as writer:
-            for record in records:
-                writer.writeRecord( record )
-    elif fileType == 'fastq':
-        with FastqWriter( filename ) as writer:
-            for record in records:
-                writer.writeRecord( record )
-    else:
-        msg = 'Output filetype must be either FASTA or FASTQ'
-        log.error( msg )
-        raise TypeError( msg )
-    return filename
+    basename = '.'.join( inputFile.split('.')[:-1] )
+    fileType = getFileType( inputFile )
+    return '%s.%s.%s' % (basename, fileTag, fileType)

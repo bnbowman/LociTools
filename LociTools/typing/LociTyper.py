@@ -8,6 +8,7 @@ from LociTools import utils
 from LociTools.utils.orientation import orientSequences
 from LociTools import references
 from LociTools.external import BlasrRunner
+from LociTools.typing import SequenceSelector
 
 log = logging.getLogger(__name__)
 
@@ -35,6 +36,7 @@ class LociTyper( object ):
         self.cDnaRef    = cDnaRef
         self.exonRef    = exonRef
         self._blasr     = BlasrRunner.BlasrRunner( blasrExe )
+        self._selector  = SequenceSelector.SequenceSelector()
 
         # Stuff
         print [s.name for s in GroupingType]
@@ -142,9 +144,9 @@ class LociTyper( object ):
         print "FIRST ALIGN: ", alignFile
         reoriented = orientSequences( inputFile, alignFile )
         print "ORIENTED: ", reoriented
-        #selected = extract_alleles( reoriented, alignment_file=raw_alignment,
-        #                    method=grouping,
-        #                    loci=loci)
+        selected = self._selector( reoriented, alignFile=alignFile )
+        print "SELECTED: ", selected
+
         #trimmed = trim_alleles( selected, trim=trim )
         #gDNA_alignment = full_align_best_reference( trimmed, genomic_reference )
         #cDNA_file = extract_cDNA( trimmed, exon_fofn, alignment_file=gDNA_alignment, debug=debug )
